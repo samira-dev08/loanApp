@@ -25,30 +25,5 @@ public class CustomerService {
     private final CustomerMapper customerMapper;
     private final TransactionRepository transactionRepository;
 
-    public void checkIdentity(PassportInfoRequest passInfo) {
-        Customer customer = customerMapper.toCustomer(passInfo);
-        TransactionDetails transactionDetails = TransactionDetails.builder()
-                .actionStatus(ActionStatus.WAITING_FOR_IDENTITY_APPROVE.toString())
-                .finalStatus(FinalStatus.IN_PROGRESS.toString())
-                .build();
-        TransactionDetails transaction= transactionRepository.create(transactionDetails);
-        customer.setTransactionDetailsId(transaction.getId());
-        customerRepository.savePassInfo(customer);
-    }
 
-    public void updateIdentityCheckStatus(Long id, LeadStatus status, String rejectReason) {
-        Customer customer = customerRepository.getCustomerById(id);
-        Long transactionId = customer.getTransactionDetailsId();
-        TransactionDetails transactionDetails = transactionRepository.getTransactionById(transactionId);
-        if (status != LeadStatus.APPROVE && Objects.isNull(rejectReason)) {
-            throw new RuntimeException("Reject reason can not be empty");
-        } else {
-            if (status == LeadStatus.APPROVE) {
-                transactionDetails.setActionStatus(ActionStatus.IDENTITY_CHECK_APPROVED.toString());
-            } else {
-                transactionDetails.setRejectReason(rejectReason);
-            }
-        }
-        transactionRepository.updateStatus(transactionDetails);
-    }
 }

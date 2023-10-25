@@ -14,5 +14,5 @@ import java.util.List;
 @Builder
 public class LoanInfoRequest {
     private BigDecimal interestRate;
-    private List<Product> productList;
+    private List<ProductRequest> productList;
 }

@@ -2,44 +2,55 @@ package com.company.service;
 
 import com.company.domain.*;
 import com.company.dto.request.LoanInfoRequest;
+import com.company.dto.request.PassportInfoRequest;
 import com.company.dto.request.PersonalInfoRequest;
+import com.company.dto.request.ProductRequest;
 import com.company.enums.ActionStatus;
-import com.company.mapper.AddressMapper;
-import com.company.mapper.ContactMapper;
-import com.company.mapper.LoanMapper;
-import com.company.repository.AddressRepository;
-import com.company.repository.ContactRepository;
-import com.company.repository.CustomerRepository;
-import com.company.repository.TransactionRepository;
+import com.company.enums.FinalStatus;
+import com.company.exception.IdentityException;
+import com.company.exception.InitialException;
+import com.company.mapper.*;
+import com.company.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
 public class CreditorService {
     private final CustomerRepository customerRepository;
-    private final AddressMapper addressMapper;
-    private final ContactMapper contactMapper;
-    private final LoanMapper loanMapper;
     private final TransactionRepository transactionRepository;
-    private final AddressRepository addressRepository;
-    private final ContactRepository contactRepository;
     private final ProductService productService;
     private final LoanService loanService;
+    private final CustomerMapper customerMapper;
+    private final AddressService addressService;
+    private final ContactService contactService;
+    private final LoanRepository loanRepository;
+
+    private static final Double PRE_AMOUNT_PERCENT = 40.0;
+    public void checkIdentity(PassportInfoRequest passInfo) {
+        Customer customer = customerMapper.toCustomer(passInfo);
+        TransactionDetails transactionDetails = TransactionDetails.builder()
+                .actionStatus(ActionStatus.WAITING_FOR_IDENTITY_APPROVE.toString())
+                .finalStatus(FinalStatus.IN_PROGRESS.toString())
+                .build();
+        TransactionDetails transaction= transactionRepository.create(transactionDetails);
+        customer.setTransactionDetailsId(transaction.getId());
+        customerRepository.savePassInfo(customer);
+    }
 
     public void initialApprove(Long customerId, PersonalInfoRequest personalInfo) {
         Customer customer = customerRepository.getCustomerById(customerId);
         System.out.println(customer);
         TransactionDetails transactionDetails = transactionRepository.getTransactionById(customer.getTransactionDetailsId());
         if (!(transactionDetails.getActionStatus().equals(ActionStatus.IDENTITY_CHECK_APPROVED.toString()))) {
-            throw new RuntimeException("Identity check failed!");
+            throw new IdentityException("Identity check failed!");
         }
         transactionDetails.setActionStatus(ActionStatus.WAITING_FOR_INITIAL_APPROVE.toString());
         transactionRepository.updateStatus(transactionDetails);
-        Address address = addressMapper.toAddress(personalInfo.getAddress());
-        Contact contact = contactMapper.toContact(personalInfo.getContact());
-        Long addressId = addressRepository.save(address).getId();
-        Long contactId = contactRepository.save(contact).getId();
+        Long addressId=addressService.saveAdrress(personalInfo.getAddress());
+        Long contactId=contactService.saveContact(personalInfo.getContact());
         customer.setAddressId(addressId);
         customer.setContactId(contactId);
         customerRepository.update(customer);
@@ -49,16 +60,15 @@ public class CreditorService {
 
         Customer customer = customerRepository.getCustomerById(customerId);
         TransactionDetails transactionDetails = transactionRepository.getTransactionById(customer.getTransactionDetailsId());
-        if (transactionDetails.getActionStatus() != ActionStatus.INITIAL_CHECK_APPROVED.toString()) {
-            throw new RuntimeException("Initial check failed!");
+        if (!(transactionDetails.getActionStatus().equals(ActionStatus.INITIAL_CHECK_APPROVED.toString()))) {
+            throw new InitialException("Initial check failed!");
         }
-        Loan loan = loanMapper.toLoan(loanInfo);
-        Long loanId = loanService.create(customerId, loan.getInterestRate());
-        for (Product product : loan.getProductList()) {
-            product.setLoanId(loanId);
-            productService.create(product);
-        }
-        loanService.addTotalAndPreAmountToLoan(loanId);
+        Loan loan = loanService.create(customerId, loanInfo.getInterestRate());
+        BigDecimal totalAmount=productService.create(loan.getId(),loanInfo.getProductList());
+        BigDecimal preAmount = totalAmount.multiply(BigDecimal.valueOf(PRE_AMOUNT_PERCENT / 100));
+        loan.setTotalAmount(totalAmount);
+        loan.setPreAmount(preAmount);
+        loanRepository.update(loan);
 
         transactionDetails.setActionStatus(ActionStatus.WAITING_FOR_FINAL_APPROVE.toString());
         transactionRepository.updateStatus(transactionDetails);

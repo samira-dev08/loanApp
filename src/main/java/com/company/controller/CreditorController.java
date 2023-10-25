@@ -15,12 +15,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/creditor")
 @RequiredArgsConstructor
 public class CreditorController {
-    private final CustomerService customerService;
     private final CreditorService creditorService;
 
     @PostMapping("/check-identity")
     public ResponseEntity<String> checkIdentity(@RequestBody PassportInfoRequest passInfo) {
-        customerService.checkIdentity(passInfo);
+        creditorService.checkIdentity(passInfo);
         return ResponseEntity.ok("Identity checked successfully.");
     }
 
