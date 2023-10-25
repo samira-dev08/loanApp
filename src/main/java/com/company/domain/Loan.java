@@ -17,6 +17,6 @@ public class Loan {
     private BigDecimal totalAmount;
     private BigDecimal preAmount;
     private BigDecimal interestRate;
-    private List<Product> productList;
+//    private List<Product> productList;
     private Long customerId;
 }

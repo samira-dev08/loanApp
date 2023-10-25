@@ -16,6 +16,21 @@ import java.util.Objects;
 public class LeadService {
     private final CustomerRepository customerRepository;
    private final TransactionRepository transactionRepository;
+    public void identityStatus(Long id, LeadStatus status, String rejectReason) {
+        Customer customer = customerRepository.getCustomerById(id);
+        Long transactionId = customer.getTransactionDetailsId();
+        TransactionDetails transactionDetails = transactionRepository.getTransactionById(transactionId);
+        if (status != LeadStatus.APPROVE && Objects.isNull(rejectReason)) {
+            throw new RuntimeException("Reject reason can not be empty");
+        } else {
+            if (status == LeadStatus.APPROVE) {
+                transactionDetails.setActionStatus(ActionStatus.IDENTITY_CHECK_APPROVED.toString());
+            } else {
+                transactionDetails.setRejectReason(rejectReason);
+            }
+        }
+        transactionRepository.updateStatus(transactionDetails);
+    }
     public void initialStatus(Long id, LeadStatus status, String rejectReason) {
         Customer customer = customerRepository.getCustomerById(id);
         Long transactionId = customer.getTransactionDetailsId();

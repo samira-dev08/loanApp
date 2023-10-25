@@ -1,19 +1,14 @@
-package com.company.domain;
+package com.company.dto.request;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-@NoArgsConstructor
-@AllArgsConstructor
 @Data
-@Builder
-public class Product {
-    private Long id;
+@AllArgsConstructor
+@NoArgsConstructor
+public class  ProductRequest {
     private String name;
     private BigDecimal price;
-    private Long loanId;
-
 }

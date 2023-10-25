@@ -10,14 +10,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/lead")
 @RequiredArgsConstructor
 public class LeadController {
-    private final CustomerService customerService;
     private final LeadService leadService;
 
     @PostMapping("/identity-status/{id}")
     public void identityStatus(@PathVariable Long id,
                                @RequestParam LeadStatus status,
                                @RequestParam(required = false) String rejectReason) {
-        customerService.updateIdentityCheckStatus(id, status, rejectReason);
+        leadService.identityStatus(id, status, rejectReason);
     }
 
     @PostMapping("/initial-status/{id}")

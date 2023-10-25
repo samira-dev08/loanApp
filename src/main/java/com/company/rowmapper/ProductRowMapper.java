@@ -14,7 +14,6 @@ public class ProductRowMapper implements RowMapper<Product> {
         return Product.builder()
                 .price(rs.getBigDecimal("price"))
                 .name(rs.getString("name"))
-                .loanId(rs.getLong("loan_id"))
                 .build();
     }
 }

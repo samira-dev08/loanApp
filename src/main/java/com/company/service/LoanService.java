@@ -5,6 +5,8 @@ import com.company.domain.Product;
 
 import com.company.repository.LoanRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,11 +21,12 @@ public class LoanService {
     private static final Double PRE_AMOUNT_PERCENT = 40.0;
 
 
-    public Long create(Long customerId, BigDecimal interestRate) {
+    public Loan create(Long customerId, BigDecimal interestRate) {
         Loan loan = new Loan();
         loan.setCustomerId(customerId);
         loan.setInterestRate(interestRate);
-        return loanRepository.create(loan).getId();
+
+        return loanRepository.create(loan);
     }
 
     @Transactional
@@ -38,6 +41,7 @@ public class LoanService {
         loan.setTotalAmount(totalAmount);
         loan.setPreAmount(preAmount);
         loanRepository.update(loan);
+
 
     }
 }
